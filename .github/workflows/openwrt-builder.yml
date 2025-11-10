@@ -46,6 +46,71 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+        sudo docker image prune --all --force
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libpython3-dev libreadline-dev libssl-dev libtool lrzsz mkisofs msmtp ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pyelftools python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
+        sudo -E apt-get -qq autoremove --purge
+        sudo -E apt-get -qq clean
+        sudo timedatectl set-timezone "$TZ"
+        sudo mkdir -p /workdir
+        sudo chown $USER:$GROUPS /workdir
+
+    - name: Free Disk Space (Action)
+      uses: jlumbroso/free-disk-space@main
+      with:
+        tool-cache: false
+        android: true
+        dotnet: true
+        haskell: true
+        large-packages: true
+        swap-storage: true
+
+    - name: 清理系统空间
+      run: |
+        echo "======================="
+        echo "清理前空间使用情况："
+        echo "======================="
+        df -h
+        
+        sudo apt-get clean
+        sudo apt-get autoremove -y
+        
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
+        sudo rm -rf /opt/microsoft
+        sudo rm -rf /opt/pipx
+        sudo rm -rf /usr/share/swift
+        
+        sudo rm -rf /usr/local/lib/node_modules
+        sudo rm -rf /usr/local/share/chromium
+        sudo rm -rf /usr/local/lib/python*
+        sudo rm -rf /var/lib/apt/lists/*
+        
+        echo "======================="
+        echo "清理后空间使用情况："
+        echo "======================="
+        df -h
+
+    - name: 检查最终磁盘空间
+      run: |
+        echo "======================="
+        echo "最终磁盘空间使用情况："
+        echo "======================="
+        df -h
+        echo "======================="
+        echo "最大的文件和目录："
+        echo "======================="
+        sudo du -sh /* 2>/dev/null | sort -hr | head -20
+    - name: Checkout
+      uses: actions/checkout@main
+
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
         dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n | tail -n 100
         df -h
         echo "Removing large packages"
